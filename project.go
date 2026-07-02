@@ -16,6 +16,7 @@ type User struct {
 	ID      int
 	Balance float32
 	Name    string
+	mu      sync.Mutex
 }
 type PaymentSystem struct {
 	Users        map[int]*User
@@ -40,6 +41,10 @@ func (PS *PaymentSystem) ProcessingTransactions(tr Transaction) error {
 	if !ok {
 		return errors.New("Пользователь с таким id не найден")
 	}
+	i.mu.Lock()
+	j.mu.Lock()
+	defer i.mu.Unlock()
+	defer j.mu.Unlock()
 	err := i.withdraw(tr.Amount)
 	if err != nil {
 		return err
@@ -63,7 +68,7 @@ func (user *User) withdraw(sum float32) error {
 func (ps *PaymentSystem) create_users(n int) {
 	for i := 0; i < n; i++ {
 		name := "user" + strconv.Itoa(len(ps.Users))
-		us := &User{len(ps.Users), float32(rand.Intn(1000)), name}
+		us := &User{len(ps.Users), float32(rand.Intn(1000)), name, sync.Mutex{}}
 		ps.AddUser(us)
 	}
 }
@@ -91,7 +96,6 @@ func (ps *PaymentSystem) worker(ch chan Transaction) {
 			fmt.Printf("Ошибка транзакции: %v\n", err)
 		}
 	}
-
 }
 func main() {
 
