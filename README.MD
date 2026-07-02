@@ -5,11 +5,10 @@
 ## Зависимости
 
 - Go 1.26+
-- `github.com/fatih/color`
 
 ## Установка
 
 ```bash
-git clone https://github.com/kreslokatalka/guess-game.git
-cd guess-game
-go run guess.go
+git clone https://github.com/kreslokatalka/UBM
+cd UBM
+go run project.go
