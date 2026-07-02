@@ -3,6 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
+	"math/rand"
+	"strconv"
+	"sync"
 )
 
 type Transaction struct {
@@ -28,20 +31,22 @@ func (PS *PaymentSystem) AddTransaction(tr ...Transaction) {
 	PS.Transactions = append(PS.Transactions, tr...)
 }
 
-func (PS *PaymentSystem) ProcessingTransactions(tr Transaction) {
+func (PS *PaymentSystem) ProcessingTransactions(tr Transaction) error {
 	i, ok := PS.Users[tr.FromID]
 	if !ok {
-		return
+		return errors.New("Пользователь с таким id не найден")
 	}
 	j, ok := PS.Users[tr.ToID]
 	if !ok {
-		return
+		return errors.New("Пользователь с таким id не найден")
 	}
 	err := i.withdraw(tr.Amount)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	} else {
 		j.deposit(tr.Amount)
+		fmt.Println(i.Name, i.Balance, j.Name, j.Balance, tr.Amount)
+		return nil
 	}
 }
 func (user *User) deposit(sum float32) {
@@ -55,22 +60,52 @@ func (user *User) withdraw(sum float32) error {
 	}
 	return errors.New("insufficient funds")
 }
-
-func main() {
-	a := &User{1, 100, "vasya"}
-	b := &User{2, 200, "petya"}
-	PS := PaymentSystem{make(map[int]*User), []Transaction{}}
-	PS.AddUser(a, b)
-	tr1 := Transaction{a.ID, b.ID, 17}
-	tr2 := Transaction{a.ID, b.ID, 14}
-	tr3 := Transaction{a.ID, b.ID, 30}
-	tr4 := Transaction{b.ID, a.ID, 54}
-	tr5 := Transaction{b.ID, a.ID, 12}
-	PS.AddTransaction(tr1, tr2, tr3, tr4, tr5)
-	for _, val := range PS.Transactions {
-		PS.ProcessingTransactions(val)
-		fmt.Println(a.Balance, b.Balance)
+func (ps *PaymentSystem) create_users(n int) {
+	for i := 0; i < n; i++ {
+		name := "user" + strconv.Itoa(len(ps.Users))
+		us := &User{len(ps.Users), float32(rand.Intn(1000)), name}
+		ps.AddUser(us)
 	}
-	PS.Transactions = *new([]Transaction)
+}
+func (ps *PaymentSystem) create_tran(n int) error {
+	if len(ps.Users) < 2 {
+		return errors.New("недостаточно пользователей")
+	}
+	for i := 0; i < n; {
+		from := rand.Intn(len(ps.Users))
+		to := rand.Intn(len(ps.Users))
+		if from == to {
+			continue
+		}
+		amount := float32(rand.Intn(10000)) / 100
+		tran := Transaction{from, to, amount}
+		ps.AddTransaction(tran)
+		i++
+	}
+	return nil
+}
+func (ps *PaymentSystem) worker(ch chan Transaction) {
+	for tr := range ch {
+		err := ps.ProcessingTransactions(tr)
+		if err != nil {
+			fmt.Printf("Ошибка транзакции: %v\n", err)
+		}
+	}
 
+}
+func main() {
+
+	PS := PaymentSystem{make(map[int]*User), []Transaction{}}
+	PS.create_users(10)
+	PS.create_tran(100)
+	Transaction_chan := make(chan Transaction, 100)
+	wg := sync.WaitGroup{}
+	for i := 0; i < 3; i++ {
+		wg.Go(func() { PS.worker(Transaction_chan) })
+	}
+	for i := range PS.Transactions {
+		Transaction_chan <- PS.Transactions[i]
+	}
+	close(Transaction_chan)
+	wg.Wait()
 }
