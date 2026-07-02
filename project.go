@@ -41,10 +41,6 @@ func (PS *PaymentSystem) ProcessingTransactions(tr Transaction) error {
 	if !ok {
 		return errors.New("Пользователь с таким id не найден")
 	}
-	i.mu.Lock()
-	j.mu.Lock()
-	defer i.mu.Unlock()
-	defer j.mu.Unlock()
 	err := i.withdraw(tr.Amount)
 	if err != nil {
 		return err
@@ -55,10 +51,14 @@ func (PS *PaymentSystem) ProcessingTransactions(tr Transaction) error {
 	}
 }
 func (user *User) deposit(sum float32) {
+	user.mu.Lock()
+	defer user.mu.Unlock()
 	user.Balance += sum
 }
 
 func (user *User) withdraw(sum float32) error {
+	user.mu.Lock()
+	defer user.mu.Unlock()
 	if user.Balance > sum {
 		user.Balance -= sum
 		return nil
