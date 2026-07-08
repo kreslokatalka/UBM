@@ -6,20 +6,20 @@ import (
 )
 
 type Transaction struct {
-	FromID, ToID int
-	Amount       float32
+	FromID, ToID string
+	Amount       float64
 }
 type User struct {
-	ID      int
-	Balance float32
+	ID      string
+	Balance float64
 	Name    string
 }
 type PaymentSystem struct {
-	Users        map[int]User
+	Users        map[string]*User
 	Transactions []Transaction
 }
 
-func (PS *PaymentSystem) AddUser(us ...User) {
+func (PS *PaymentSystem) AddUser(us ...*User) {
 	for _, u := range us {
 		PS.Users[u.ID] = u
 	}
@@ -43,13 +43,14 @@ func (PS *PaymentSystem) ProcessingTransactions(tr Transaction) {
 	} else {
 		j.deposit(tr.Amount)
 	}
+	fmt.Println(j.Balance, i.Balance)
 }
-func (user *User) deposit(sum float32) {
+func (user *User) deposit(sum float64) {
 	user.Balance += sum
 }
 
-func (user *User) withdraw(sum float32) error {
-	if user.Balance > sum {
+func (user *User) withdraw(sum float64) error {
+	if user.Balance >= sum {
 		user.Balance -= sum
 		return nil
 	}
@@ -57,10 +58,10 @@ func (user *User) withdraw(sum float32) error {
 }
 
 func main() {
-	a := &User{1, 100, "vasya"}
-	b := &User{2, 200, "petya"}
-	PS := PaymentSystem{}
-	PS.AddUser(*a, *b)
+	a := User{"1", 100, "vasya"}
+	b := User{"2", 200, "petya"}
+	PS := PaymentSystem{make(map[string]*User), []Transaction{}}
+	PS.AddUser(&a, &b)
 	tr1 := Transaction{a.ID, b.ID, 17}
 	tr2 := Transaction{a.ID, b.ID, 14}
 	tr3 := Transaction{a.ID, b.ID, 30}
@@ -69,7 +70,11 @@ func main() {
 	PS.AddTransaction(tr1, tr2, tr3, tr4, tr5)
 	for _, val := range PS.Transactions {
 		PS.ProcessingTransactions(val)
-		PS.Transactions = *new([]Transaction)
+		fmt.Println(a.Balance, b.Balance)
 	}
-
+	PS.Transactions = *new([]Transaction)
+	for _, val := range PS.Transactions {
+		PS.ProcessingTransactions(val)
+		fmt.Println(a.Balance, b.Balance)
+	}
 }
