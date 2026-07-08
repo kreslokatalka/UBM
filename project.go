@@ -6,17 +6,17 @@ import (
 )
 
 type User struct {
-	ID      int
-	Balance float32
+	ID      string
+	Balance float64
 	Name    string
 }
 
-func (user *User) deposit(sum float32) {
+func (user *User) deposit(sum float64) {
 	user.Balance += sum
 }
 
-func (user *User) withdraw(sum float32) error {
-	if user.Balance > sum {
+func (user *User) withdraw(sum float64) error {
+	if user.Balance >= sum {
 		user.Balance -= sum
 		return nil
 	}
@@ -24,7 +24,7 @@ func (user *User) withdraw(sum float32) error {
 }
 
 func main() {
-	a := &User{1, 100, "vasya"}
+	a := &User{"1", 100, "vasya"}
 	println(a.Balance)
 	a.deposit(100)
 	println(a.Balance)
