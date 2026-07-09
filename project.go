@@ -55,7 +55,7 @@ func (user *User) deposit(sum float64) {
 }
 
 func (user *User) withdraw(sum float64) error {
-	if user.Balance > sum {
+	if user.Balance >= sum {
 		user.Balance -= sum
 		return nil
 	}
@@ -64,7 +64,7 @@ func (user *User) withdraw(sum float64) error {
 func (ps *PaymentSystem) create_users(n int) {
 	for i := 0; i < n; i++ {
 		name := "user" + strconv.Itoa(len(ps.Users))
-		us := &User{string(len(ps.Users)), float64(rand.Intn(1000)), name}
+		us := &User{strconv.Itoa(len(ps.Users)), float64(rand.Intn(1000)), name}
 		ps.AddUser(us)
 	}
 }
