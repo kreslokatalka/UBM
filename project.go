@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"math"
 	"math/rand"
 	"strconv"
 	"sync"
@@ -45,7 +46,7 @@ func (PS *PaymentSystem) ProcessingTransactions(tr Transaction) error {
 		return err
 	} else {
 		j.deposit(tr.Amount)
-		fmt.Println(i.Name, i.Balance, j.Name, j.Balance, tr.Amount)
+		fmt.Println(i.Name, math.Round(i.Balance*100)/100, j.Name, math.Round(j.Balance*100)/100, tr.Amount)
 		return nil
 	}
 }
