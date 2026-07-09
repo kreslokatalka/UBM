@@ -46,7 +46,7 @@ func (PS *PaymentSystem) ProcessingTransactions(tr Transaction) error {
 		return err
 	} else {
 		j.deposit(tr.Amount)
-		fmt.Println(i.Name, math.Round(i.Balance*100)/100, j.Name, math.Round(j.Balance*100)/100, tr.Amount)
+		fmt.Println(i.ID, math.Round(i.Balance*100)/100, j.ID, math.Round(j.Balance*100)/100, tr.Amount)
 		return nil
 	}
 }
