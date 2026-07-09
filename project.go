@@ -3,23 +3,24 @@ package main
 import (
 	"errors"
 	"fmt"
+	"math"
 	"math/rand"
 	"strconv"
 	"sync"
 )
 
 type Transaction struct {
-	FromID, ToID int
-	Amount       float32
+	FromID, ToID string
+	Amount       float64
 }
 type User struct {
-	ID      int
-	Balance float32
+	ID      string
+	Balance float64
 	Name    string
 	mu      sync.Mutex
 }
 type PaymentSystem struct {
-	Users        map[int]*User
+	Users        map[string]*User
 	Transactions []Transaction
 }
 
@@ -46,20 +47,20 @@ func (PS *PaymentSystem) ProcessingTransactions(tr Transaction) error {
 		return err
 	} else {
 		j.deposit(tr.Amount)
-		fmt.Println(i.Name, i.Balance, j.Name, j.Balance, tr.Amount)
+		fmt.Println(i.ID, math.Round(i.Balance*100)/100, j.ID, math.Round(j.Balance*100)/100, tr.Amount)
 		return nil
 	}
 }
-func (user *User) deposit(sum float32) {
+func (user *User) deposit(sum float64) {
 	user.mu.Lock()
 	defer user.mu.Unlock()
 	user.Balance += sum
 }
 
-func (user *User) withdraw(sum float32) error {
+func (user *User) withdraw(sum float64) error {
 	user.mu.Lock()
 	defer user.mu.Unlock()
-	if user.Balance > sum {
+	if user.Balance >= sum {
 		user.Balance -= sum
 		return nil
 	}
@@ -68,21 +69,29 @@ func (user *User) withdraw(sum float32) error {
 func (ps *PaymentSystem) create_users(n int) {
 	for i := 0; i < n; i++ {
 		name := "user" + strconv.Itoa(len(ps.Users))
-		us := &User{len(ps.Users), float32(rand.Intn(1000)), name, sync.Mutex{}}
+		us := &User{strconv.Itoa(len(ps.Users)), float64(rand.Intn(1000)), name, sync.Mutex{}}
 		ps.AddUser(us)
 	}
+}
+func (ps *PaymentSystem) rand_user() string {
+	keys := make([]string, 0, len(ps.Users))
+	for key := range ps.Users {
+		keys = append(keys, key)
+	}
+	return keys[rand.Intn(len(keys))]
 }
 func (ps *PaymentSystem) create_tran(n int) error {
 	if len(ps.Users) < 2 {
 		return errors.New("недостаточно пользователей")
 	}
+
 	for i := 0; i < n; {
-		from := rand.Intn(len(ps.Users))
-		to := rand.Intn(len(ps.Users))
+		from := ps.rand_user()
+		to := ps.rand_user()
 		if from == to {
 			continue
 		}
-		amount := float32(rand.Intn(10000)) / 100
+		amount := float64(rand.Intn(10000)) / 100
 		tran := Transaction{from, to, amount}
 		ps.AddTransaction(tran)
 		i++
@@ -96,10 +105,11 @@ func (ps *PaymentSystem) worker(ch chan Transaction) {
 			fmt.Printf("Ошибка транзакции: %v\n", err)
 		}
 	}
+
 }
 func main() {
 
-	PS := PaymentSystem{make(map[int]*User), []Transaction{}}
+	PS := PaymentSystem{make(map[string]*User), []Transaction{}}
 	PS.create_users(10)
 	PS.create_tran(100)
 	Transaction_chan := make(chan Transaction, 100)
