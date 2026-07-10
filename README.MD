@@ -13,6 +13,5 @@ git clone https://github.com/kreslokatalka/UBM
 cd UBM
 go run project.go
 ```
-## Изменения
-
-Добавлено функция транзакции и структура системы платежей 
+## Описение версии
+Созданы структуры Transaction и PaymentSyste, реализованы методы ProcessingTransaction, AddUser и AddTransaction для PaymentSystem 

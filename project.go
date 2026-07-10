@@ -28,22 +28,20 @@ func (PS *PaymentSystem) AddTransaction(tr ...Transaction) {
 	PS.Transactions = append(PS.Transactions, tr...)
 }
 
-func (PS *PaymentSystem) ProcessingTransactions(tr Transaction) {
+func (PS *PaymentSystem) ProcessingTransactions(tr Transaction) error {
 	i, ok := PS.Users[tr.FromID]
 	if !ok {
-		return
+		return errors.New("Missing Sender ID")
 	}
 	j, ok := PS.Users[tr.ToID]
 	if !ok {
-		return
+		return errors.New("Missing Recipient ID")
 	}
 	err := i.withdraw(tr.Amount)
-	if err != nil {
-		fmt.Println(err)
-	} else {
+	if err == nil {
 		j.deposit(tr.Amount)
 	}
-	fmt.Println(j.Balance, i.Balance)
+	return err
 }
 func (user *User) deposit(sum float64) {
 	user.Balance += sum
@@ -69,12 +67,18 @@ func main() {
 	tr5 := Transaction{b.ID, a.ID, 12}
 	PS.AddTransaction(tr1, tr2, tr3, tr4, tr5)
 	for _, val := range PS.Transactions {
-		PS.ProcessingTransactions(val)
+		err := PS.ProcessingTransactions(val)
+		if err != nil {
+			fmt.Println(err)
+		}
 		fmt.Println(a.Balance, b.Balance)
 	}
 	PS.Transactions = *new([]Transaction)
 	for _, val := range PS.Transactions {
-		PS.ProcessingTransactions(val)
+		err := PS.ProcessingTransactions(val)
+		if err != nil {
+			fmt.Println(err)
+		}
 		fmt.Println(a.Balance, b.Balance)
 	}
 }
