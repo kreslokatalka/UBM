@@ -35,20 +35,17 @@ func (PS *PaymentSystem) AddTransaction(tr ...Transaction) {
 func (PS *PaymentSystem) ProcessingTransactions(tr Transaction) error {
 	i, ok := PS.Users[tr.FromID]
 	if !ok {
-		return errors.New("Пользователь с таким id не найден")
+		return errors.New("Missing Sender ID")
 	}
 	j, ok := PS.Users[tr.ToID]
 	if !ok {
-		return errors.New("Пользователь с таким id не найден")
+		return errors.New("Missing Recipient ID")
 	}
 	err := i.withdraw(tr.Amount)
-	if err != nil {
-		return err
-	} else {
+	if err == nil {
 		j.deposit(tr.Amount)
-		fmt.Println(i.ID, math.Round(i.Balance*100)/100, j.ID, math.Round(j.Balance*100)/100, tr.Amount)
-		return nil
 	}
+	return err
 }
 func (user *User) deposit(sum float64) {
 	user.Balance += sum
@@ -77,9 +74,8 @@ func (ps *PaymentSystem) rand_user() string {
 }
 func (ps *PaymentSystem) create_tran(n int) error {
 	if len(ps.Users) < 2 {
-		return errors.New("недостаточно пользователей")
+		return errors.New("Not Enough Users")
 	}
-
 	for i := 0; i < n; {
 		from := ps.rand_user()
 		to := ps.rand_user()
@@ -98,8 +94,9 @@ func (ps *PaymentSystem) worker(ch chan Transaction) {
 		err := ps.ProcessingTransactions(tr)
 		if err != nil {
 			fmt.Printf("Ошибка транзакции: %v\n", err)
-			fmt.Println(tr.FromID, tr.ToID)
 		}
+		fmt.Println(ps.Users[tr.FromID].Name, math.Round(ps.Users[tr.FromID].Balance*100)/100, ps.Users[tr.ToID].Name, math.Round(ps.Users[tr.FromID].Balance*100)/100, tr.Amount)
+
 	}
 
 }
@@ -108,7 +105,7 @@ func main() {
 	PS := PaymentSystem{make(map[string]*User), []Transaction{}}
 	PS.create_users(10)
 	PS.create_tran(100)
-	Transaction_chan := make(chan Transaction, 100)
+	Transaction_chan := make(chan Transaction, len(PS.Transactions))
 	wg := sync.WaitGroup{}
 	for i := 0; i < 3; i++ {
 		wg.Go(func() { PS.worker(Transaction_chan) })
@@ -118,4 +115,5 @@ func main() {
 	}
 	close(Transaction_chan)
 	wg.Wait()
+
 }

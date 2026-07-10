@@ -13,6 +13,5 @@ git clone https://github.com/kreslokatalka/UBM
 cd UBM
 go run project.go
 ```
-## Изменения
-
-Добавлена конкурентность 
+## Описание версии
+Создана функция worker для конкурентной обработки транзакций и функции rand_user, create_trans и create_user для упрощенного тестирования
