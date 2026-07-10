@@ -38,4 +38,14 @@ func main() {
 		fmt.Println(err)
 	}
 	println(a.Balance)
+
+	b := &User{"2", 1500, "nevasya"}
+	println(b.Balance)
+	b.deposit(600)
+	println(b.Balance)
+	err = b.withdraw(600)
+	if err != nil {
+		fmt.Println(err)
+	}
+	println(b.Balance)
 }

@@ -12,3 +12,6 @@
 git clone https://github.com/kreslokatalka/UBM
 cd UBM
 go run project.go
+```
+## Описание версии
+Были создана структура User имеющая три поля ID, Name и Balance, и 2 метода withdraw и deposit для изменения баланса
