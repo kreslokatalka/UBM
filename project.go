@@ -15,7 +15,7 @@ type Transaction struct {
 }
 type User struct {
 	ID      string
-	Balance float64
+	balance float64
 	Name    string
 	mu      sync.Mutex
 }
@@ -24,6 +24,11 @@ type PaymentSystem struct {
 	Transactions []Transaction
 }
 
+func (us *User) Get_Balance() float64 {
+	us.mu.Lock()
+	defer us.mu.Unlock()
+	return us.balance
+}
 func (PS *PaymentSystem) AddUser(us ...*User) {
 	for _, u := range us {
 		PS.Users[u.ID] = u
@@ -36,32 +41,32 @@ func (PS *PaymentSystem) AddTransaction(tr ...Transaction) {
 func (PS *PaymentSystem) ProcessingTransactions(tr Transaction) error {
 	i, ok := PS.Users[tr.FromID]
 	if !ok {
-		return errors.New("Пользователь с таким id не найден")
+		return errors.New("Missing Sender ID")
 	}
 	j, ok := PS.Users[tr.ToID]
 	if !ok {
-		return errors.New("Пользователь с таким id не найден")
+		return errors.New("Missing Recipient ID")
 	}
 	err := i.withdraw(tr.Amount)
 	if err != nil {
 		return err
 	} else {
 		j.deposit(tr.Amount)
-		fmt.Println(i.ID, math.Round(i.Balance*100)/100, j.ID, math.Round(j.Balance*100)/100, tr.Amount)
+		fmt.Println(i.ID, math.Round(i.Get_Balance()*100)/100, j.ID, math.Round(j.Get_Balance()*100)/100, tr.Amount)
 		return nil
 	}
 }
 func (user *User) deposit(sum float64) {
 	user.mu.Lock()
 	defer user.mu.Unlock()
-	user.Balance += sum
+	user.balance += sum
 }
 
 func (user *User) withdraw(sum float64) error {
 	user.mu.Lock()
 	defer user.mu.Unlock()
-	if user.Balance >= sum {
-		user.Balance -= sum
+	if user.balance >= sum {
+		user.balance -= sum
 		return nil
 	}
 	return errors.New("insufficient funds")
@@ -82,7 +87,7 @@ func (ps *PaymentSystem) rand_user() string {
 }
 func (ps *PaymentSystem) create_tran(n int) error {
 	if len(ps.Users) < 2 {
-		return errors.New("недостаточно пользователей")
+		return errors.New("Not Enough Users")
 	}
 
 	for i := 0; i < n; {
@@ -104,6 +109,8 @@ func (ps *PaymentSystem) worker(ch chan Transaction) {
 		if err != nil {
 			fmt.Printf("Ошибка транзакции: %v\n", err)
 		}
+		fmt.Println(ps.Users[tr.FromID].Name, math.Round(ps.Users[tr.FromID].Get_Balance()*100)/100, ps.Users[tr.ToID].Name, math.Round(ps.Users[tr.FromID].Get_Balance()*100)/100, tr.Amount)
+
 	}
 
 }
